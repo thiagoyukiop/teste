@@ -29,10 +29,16 @@ server <- function(input, output, session) {
   })
   
   # Atualiza o texto de saída com os anos selecionados
+  # output$anos_selecionados <- renderText({
+  #   intervalo <- input$intervalo_anos[1]:input$intervalo_anos[2]
+  #   paste("Intervalo de anos selecionados: ", paste(intervalo, collapse = "-"))
+  # })
+  
   output$anos_selecionados <- renderText({
-    intervalo <- input$intervalo_anos[1]:input$intervalo_anos[2]
+    intervalo <- input$intervalo_anos
     paste("Intervalo de anos selecionados: ", paste(intervalo, collapse = "-"))
   })
+  
   
   output$grafico <- renderPlot({
     dados <- dados_tubaroes()
@@ -48,9 +54,9 @@ server <- function(input, output, session) {
     hist_rel <- hist(dados$Tamanho, plot = FALSE)
     frequencia_relativa <- hist_rel$counts / sum(hist_rel$counts) * 100
     barplot(frequencia_relativa, names.arg = hist_rel$mids,
-            main = "Histograma de Frequência Relativa",
+            main = "Distriubuição de tamanhos dos Tubarões",
             xlab = "Tamanho (cm)", ylab = "Frequência Relativa (%)",
-            col = "lightblue", border = "black")
+            col = "blue", border = "black")
   })
 }
 
