@@ -1,5 +1,7 @@
 library(shiny)
+library(shinyFeedback)
 library(scales)
+library(ggplot2)
 
 # Função para gerar dados de tamanhos de tubarões
 gerar_dados_tubaroes <- function(media, desvio_padrao, n_amostras) {
@@ -28,17 +30,10 @@ server <- function(input, output, session) {
     gerar_dados_tubaroes(150, 10, 1000)  # Média de 150, desvio padrão de 30
   })
   
-  # Atualiza o texto de saída com os anos selecionados
-  # output$anos_selecionados <- renderText({
-  #   intervalo <- input$intervalo_anos[1]:input$intervalo_anos[2]
-  #   paste("Intervalo de anos selecionados: ", paste(intervalo, collapse = "-"))
-  # })
-  
   output$anos_selecionados <- renderText({
     intervalo <- input$intervalo_anos
     paste("Intervalo de anos selecionados: ", paste(intervalo, collapse = "-"))
   })
-  
   
   output$grafico <- renderPlot({
     dados <- dados_tubaroes()
@@ -50,13 +45,13 @@ server <- function(input, output, session) {
       dados <- subset(dados, Sexo == "F")
     }
     
-    # Cria o histograma e o gráfico de barras
-    hist_rel <- hist(dados$Tamanho, plot = FALSE)
-    frequencia_relativa <- hist_rel$counts / sum(hist_rel$counts) * 100
-    barplot(frequencia_relativa, names.arg = hist_rel$mids,
-            main = "Distriubuição de tamanhos dos Tubarões",
-            xlab = "Tamanho (cm)", ylab = "Frequência Relativa (%)",
-            col = "blue", border = "black")
+    # Cria o gráfico ggplot
+    ggplot(dados, aes(x = Tamanho)) +
+      geom_histogram(binwidth = 10, fill = "blue", color = "black") +
+      labs(title = "Distribuição de Tamanhos de Tubarões",
+           x = "Tamanho (cm)",
+           y = "Frequência (%)") +
+      scale_y_continuous(labels = scales::label_percent(scale = 0.1))
   })
 }
 
