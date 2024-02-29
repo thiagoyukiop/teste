@@ -70,38 +70,26 @@ server <- function(input, output, session) {
     dados <- dados_tubaroes()
     
     dados <- subset(dados, Ano >= input$intervalo_anos[1] & Ano <= input$intervalo_anos[2])
-    # ggplot(dados, aes(x = "", fill = Sexo)) +
-    #   geom_bar(width = 1, position = "stack") +
-    #   coord_polar(theta = "y") +
-    #   labs(title = "Distribuição de Tamanhos de Tubarões por Sexo",
-    #        fill = "Sexo") +
-    #   xlim(c(2, 4)) +
-    #   theme_void()
+
+    gender <- dados_teste %>%
+      count(Sexo)
     
-    # ggplot(dados, aes(ymax=ymax, ymin=ymin, xmax=4, xmin=3, fill=Sexo)) +
-    #   geom_rect() +
-    #   coord_polar(theta="y") + # Try to remove that to understand how the chart is built initially
-    #   xlim(c(2, 4)) # Try to remove that to see how to make a pie chart
+    gender <- gender %>%
+      mutate(porc = n / sum(n) * 100)
     
-    # ggplot(dados, aes(x = "", fill = Sexo)) +
-    #   geom_rect(aes(ymin = 0, ymax = 100, xmin = 3, xmax = 4, fill = Sexo)) +
-    #   coord_polar(theta = "y") +
-    #   labs(title = "Distribuição de Tamanhos de Tubarões por Sexo") +
-    #   theme_void()
-    # 
-    # gender <- dados_teste %>% 
-    #   count(Sexo)
-    # 
-    # gender$porc <- gender %>% 
-    #   mutate(porc = n/cumsum(n))
+    gender$ymax <- cumsum(gender$porc)
+    gender$ymin <- c(0, head(gender$ymax, n=1))
     
-    # ggplot(dados, aes())
+    ggplot(gender, aes(ymax=ymax, ymin=ymin, xmax = 4, xmin = 3, fill = Sexo)) +
+      geom_rect() +
+      coord_polar(theta = "y") +
+      xlim(c(1,4)) +
+      theme_void()
   })
 }
 
-dados_teste <- gerar_dados_tubaroes(150, 10, 10000, 2018, 2023)
-
-gender <- dados_teste %>% 
-  count(Sexo)
-
 shinyApp(ui, server)
+
+
+
+  
