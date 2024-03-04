@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyMobile)
 library(apexcharter)
+library(dplyr)
 
 dados <-read.csv("dados_brutos/dados_brutos.csv", sep = ";")
 
@@ -119,3 +120,4 @@ shinyApp(
     }, rownames = TRUE)
   }
 )
+plo
