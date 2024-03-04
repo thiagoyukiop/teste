@@ -5,11 +5,6 @@ library(dplyr)
 
 dados <-read.csv("dados_brutos/dados_brutos.csv", sep = ";")
 
-# poll2 <- data.frame(
-#   answer = c("Yes", "No"),
-#   n = c(254, 238)
-# )
-
   poll <- dados %>%
     count(Sexo)
 
@@ -120,4 +115,3 @@ shinyApp(
     }, rownames = TRUE)
   }
 )
-plo
