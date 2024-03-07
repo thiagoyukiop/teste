@@ -50,6 +50,8 @@
           )
         ),
         body = dashboardBody(
+          actionButton(inputId = "controlbarMenuToggle",
+                       label = "Toggle Controlbar"),
           plotOutput("distPlot")
           ),
         controlbar = dashboardControlbar(
@@ -81,10 +83,6 @@
                 ),
               ),
             controlbarItem(
-              "2",
-              
-            ),
-            controlbarItem(
               "Tema",
               "Bem-Vindo ao Seletor de Tema",
               skinSelector()
@@ -99,6 +97,11 @@
           print(paste("Conteúdo da aba selecionada:", selected_tab))
           print(selected_tab)
         })
+        
+        observeEvent(input$controlbarMenuToggle, {
+          updateControlbarMenu("controlbar")
+        })
+        
         
         output$distPlot <- renderPlot({
           if(input$obs!=0){
