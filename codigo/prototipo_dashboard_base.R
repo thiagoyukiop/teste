@@ -9,7 +9,7 @@
     } else {
       print(paste0("Pacote já estava instalado e já carregado para o trabalho"))
       library(pacman)
-    }
+      }
     
     p_load(shiny, shinydashboard, shinydashboardPlus, shinythemes)
     
@@ -19,11 +19,22 @@
         header = dashboardHeader(
            title = "Projeto Tubarão Azul"
         ),
-        sidebar = dashboardSidebar(width = 100,
+        sidebar = dashboardSidebar(width = 250,
           
           id = "sidebar",
           minified = FALSE,
           collapsed = FALSE,
+          
+          tags$head(
+            tags$style(HTML('
+            /* Ajuste o tamanho dos títulos das abas dentro do sidebarPanel */
+            .custom-sidebar .nav-tabs > li > a {
+              width: 240px; /* Largura fixa para os títulos das abas */
+              text-align: center; /* Centraliza o texto */
+            }
+          '))
+          ),
+          
       #     tags$head(
       #       tags$style(HTML("
       #   /* Estilo para alterar a cor do texto do sidebar para preto */
@@ -43,13 +54,13 @@
           sidebarMenu(
             id = "sidebarMenu",
             sidebarLayout(
-              sidebarPanel(width = 12,
+              sidebarPanel(width = 250,class = "custom-sidebar",
                tabsetPanel(
                  id = "tabs",
                  tabPanel("Apresentação", value = "tab1"),
                  tabPanel("Distribuição de comprimentos", value = "tab2"),
                  tabPanel("Desembarques", value = "tab3"),
-                 tabPanel("Distribuição "/n"espacial das capturas", value = "tab4")
+                 tabPanel("Distribuição espacial das capturas", value = "tab4")
                )
               ),
               mainPanel()
@@ -57,15 +68,14 @@
           )
         ),
         body = dashboardBody(
-          plotOutput("distPlot"),
-          actionButton(inputId = "controlbarMenuToggle",
-                       label = "Toggle Controlbar")
+          plotOutput("distPlot")
           ),
         controlbar = dashboardControlbar(
           collapsed = FALSE,
           id = "controlbar",
           controlbarMenu(
             id = "controlbarMenu",
+            
             controlbarItem(
               "Opções",
               sliderInput(
@@ -87,14 +97,15 @@
                   "Meca", "Outros"),
                 selected = c("Albacora bandolim","Albacora branca",
                              "Albacora laje", "Meca","Outros")
-                ),
               ),
+            ),
+            
             controlbarItem(
               "Tema",
               "Bem-Vindo ao Seletor de Tema",
-              skinSelector()
-            )
+              skinSelector())
           )
+          
         ),
         title = "Teste ShinyDashboardPlus",
       ),
@@ -105,9 +116,6 @@
           print(selected_tab)
         })
         
-        observeEvent(input$controlbarMenuToggle, {
-          updateControlbarMenu("controlbar")
-        })
         
         
         output$distPlot <- renderPlot({
