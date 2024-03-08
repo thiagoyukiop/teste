@@ -1,10 +1,17 @@
   if(interactive()){
     
     options(device.ask.default = FALSE)
-    library(shiny)
-    library(shinydashboard)
-    library(shinydashboardPlus)
-    library(shinythemes)
+    
+    if(!require(pacman)) {
+      print(paste0("Pacote ainda não instalado. Irei instalar agora!"))
+      install.packages("pacman", dependencies = TRUE)
+      library(pacman)
+    } else {
+      print(paste0("Pacote já estava instalado e já carregado para o trabalho"))
+      library(pacman)
+    }
+    
+    p_load(shiny, shinydashboard, shinydashboardPlus, shinythemes)
     
     shinyApp(
       ui = dashboardPage(
@@ -39,10 +46,10 @@
               sidebarPanel(width = 12,
                tabsetPanel(
                  id = "tabs",
-                 tabPanel("Tab 1", value = "tab1"),
-                 tabPanel("Tab 2", value = "tab2"),
-                 tabPanel("Tab 3", value = "tab3"),
-                 tabPanel("Tab 4", value = "tab4")
+                 tabPanel("Apresentação", value = "tab1"),
+                 tabPanel("Distribuição de comprimentos", value = "tab2"),
+                 tabPanel("Desembarques", value = "tab3"),
+                 tabPanel("Distribuição "/n"espacial das capturas", value = "tab4")
                )
               ),
               mainPanel()
@@ -50,9 +57,9 @@
           )
         ),
         body = dashboardBody(
+          plotOutput("distPlot"),
           actionButton(inputId = "controlbarMenuToggle",
-                       label = "Toggle Controlbar"),
-          plotOutput("distPlot")
+                       label = "Toggle Controlbar")
           ),
         controlbar = dashboardControlbar(
           collapsed = FALSE,
