@@ -17,8 +17,9 @@
       ui = dashboardPage(
         options = list(sidebarExpandOnHover = TRUE),
         header = dashboardHeader(
-           title = "Projeto Tubarão Azul"
-        ),
+           title = "  Projeto Tubarão Azul"
+           ),
+        # ),
         sidebar = dashboardSidebar(width = 250,
           
           id = "sidebar",
@@ -31,6 +32,12 @@
             .custom-sidebar .nav-tabs > li > a {
               width: 240px; /* Largura fixa para os títulos das abas */
               text-align: center; /* Centraliza o texto */
+            }
+            /* Estilo para alterar a cor do texto do sidebar para preto */
+            #sidebar .sidebar-menu li a,
+            #sidebar .sidebar-menu li a:hover,
+            #sidebar .sidebar-menu label {
+              color: #000000 !important; /* Cor preta */
             }
           '))
           ),
@@ -63,12 +70,23 @@
                  tabPanel("Distribuição espacial das capturas", value = "tab4")
                )
               ),
-              mainPanel()
+              mainPanel(
+                img(src = 'dados_brutos/ImagemSide.png', height = "100%", width = "100%")
+              )
             )
           )
         ),
         body = dashboardBody(
-          plotOutput("distPlot")
+          tags$head(
+            tags$style(HTML('
+            /* Definir a largura do accordion */
+            #accordion .box {
+              width: 520px; /* Substitua por qualquer valor que desejar */
+              text-align: center; /* Centraliza o texto */
+            }
+          '))
+          ),
+          uiOutput("accordion_ui")
           ),
         controlbar = dashboardControlbar(
           collapsed = FALSE,
@@ -103,31 +121,57 @@
             controlbarItem(
               "Tema",
               "Bem-Vindo ao Seletor de Tema",
-              skinSelector())
+              skinSelector()
+              )
           )
           
         ),
         title = "Teste ShinyDashboardPlus",
       ),
-      server = function(input, output, session) {
-        observeEvent(input$tabs, {
-          selected_tab <- input$tabs
-          print(paste("Conteúdo da aba selecionada:", selected_tab))
-          print(selected_tab)
+      server <- function(input, output, session) {
+        output$accordion_ui <- renderUI({
+          if(input$tabs == "tab1") {
+            accordion(
+              id = "accordion",
+              width = 60,
+              accordionItem(
+                title = "Visualização dos Dados",
+                status = "primary",
+                collapsed = FALSE,
+                plotOutput("distPlot", width = "500px", height = "500px")
+              )
+            )
+          } else if(input$tabs == "tab2") {
+            accordion(
+              id = "accordion",
+              width = 60,
+              accordionItem(
+                title = "Visualização de Texto",
+                status = "success",
+                collapsed = FALSE,
+                textOutput("textOut")
+              )
+            )
+          }
         })
         
-        
-        
         output$distPlot <- renderPlot({
-          if(input$obs!=0){
-            if(input$tabs=="tab4"){
-              hist(rnorm(input$obs), col = "blue",
-                   main = paste("Histograma Teste - Observações:", input$obs),
-                   xlab = "", freq = TRUE)
-            }
+          if(input$obs != 0 && input$tabs == "tab1"){
+            hist(rnorm(input$obs), col = "blue",
+                 main = paste("Histograma Teste - Observações:", input$obs),
+                 xlab = "", freq = TRUE)
+          }
+        })
+        
+        output$textOut <- renderText({
+          if(input$tabs == "tab2"){
+            texto <- readLines("dados_brutos/TesteOutputText.txt", warn = FALSE)
+            paste(texto, collapse = "\n")
           }
         })
       }
+      
+      
     )
   }
   
