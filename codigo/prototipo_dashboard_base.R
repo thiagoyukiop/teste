@@ -23,21 +23,30 @@ if(interactive()){
         width = 250,
         id = "sidebar",
         minified = FALSE,
-        collapsed = FALSE,
+        collapsed = F,
         tags$head(
-        tags$style(HTML('
-            /* Ajuste o tamanho dos títulos das abas dentro do sidebarPanel */
-            .custom-sidebar .nav-tabs > li > a {
-              width: 240px; /* Largura fixa para os títulos das abas */
-              text-align: center; /* Centraliza o texto */
-            }
-            /* Estilo para alterar a cor do texto do sidebar para preto */
-            #sidebar .sidebar-menu li a,
-            #sidebar .sidebar-menu li a:hover,
-            #sidebar .sidebar-menu label {
-              color: #000000 !important; /* Cor preta */
-            }
-          '))
+          tags$style(HTML('
+          /* Ajuste o tamanho dos títulos das abas dentro do sidebarPanel */
+          .custom-sidebar .nav-tabs > li > a {
+            width: 240px; /* Largura fixa para os títulos das abas */
+            text-align: center; /* Centraliza o texto */
+          }
+          /* Estilo para alterar a cor do texto do sidebar para preto */
+          #sidebar .sidebar-menu li a,
+          #sidebar .sidebar-menu li a:hover,
+          #sidebar .sidebar-menu label {
+            color: #000000 !important; /* Cor preta */
+          }
+          .teste-accordion {
+          display: inline-block;
+          margin: 10px auto;
+          }
+      
+          .teste-accordion .accordion-title {
+          text-align: center; /* Centraliza o texto apenas nos títulos */
+          }
+
+        '))
         ),
        #     tags$head(
        #       tags$style(HTML("
@@ -75,24 +84,11 @@ if(interactive()){
           )
         ),
       body = dashboardBody(
-        tabsetPanel(
-          id = "bodyTab",
-          tabPanel("Projeto", value = "tab1body"),
-          tabPanel("Leia-me", value = "tab2body")
-        ),
-        tags$head(
-          tags$style(HTML('
-            /* Definir a largura do accordion */
-            #accordion .box {
-              width: 520px; /* Substitua por qualquer valor que desejar */
-              text-align: center; /* Centraliza o texto */
-            }
-          '))
-        ),
+        uiOutput("tabset_ui"),
         uiOutput("accordion_ui")
       ),
       controlbar = dashboardControlbar(
-        collapsed = FALSE,
+        collapsed = T,
         id = "controlbar",
         controlbarMenu(
           id = "controlbarMenu",
@@ -119,76 +115,76 @@ if(interactive()){
                            "Albacora laje", "Meca","Outros")
             ),
           ),
-          
           controlbarItem(
             "Tema",
             "Bem-Vindo ao Seletor de Tema",
             skinSelector()
+            )
           )
-        )
-        
-      ),
+        ),
       title = "Teste ShinyDashboardPlus",
     ),
     server <- function(input, output, session) {
       
-      docx_content1 <- readtext("dados_brutos/testeWord.docx")
+      pdf_content1 <- readtext("dados_brutos/testepdf.pdf")
       
-      docx_content2 <- readtext("dados_brutos/leiame.docx")
+      pdf_content2 <- readtext("dados_brutos/leiame.pdf")
+      
+      output$tabset_ui <- renderUI({
+        if(input$headerTab == "tab1header") {
+          tabsetPanel(
+            id = "bodyTab",
+            tabPanel("Projeto", value = "tab1body"),
+            tabPanel("Leia-me", value = "tab2body")
+          )
+        }
+      })
       
       output$accordion_ui <- renderUI({
-        if(input$headerTab == "tab2header") {
-          accordion(
-            id = "accordion1",
-            width = 60,
-            accordionItem(
-              title = "Visualização dos Dados",
-              status = "primary",
-              collapsed = FALSE,
-              fluidRow(
-                column(6, plotOutput("distPlot")),
-                column(6, plotOutput("plot2")),
-                column(6, plotOutput("plot3")),
-                column(6, plotOutput("plot4")),
-              )
+      if(input$headerTab == "tab2header") {
+        accordion(
+          id = "accordion1",
+          width = 12,
+          accordionItem(
+            title = "Visualização dos Dados",
+            status = "primary",
+            collapsed = FALSE,
+            fluidRow(
+              column(6, plotOutput("distPlot")),
+              column(6, plotOutput("plot2")),
+              column(6, plotOutput("plot3")),
+              column(6, plotOutput("plot4"))
             )
           )
-        } else if(input$headerTab == "tab1header") {
+        )
+      } else if(input$headerTab == "tab1header") {
+        div(class = "teste-accordion",
           accordion(
             id = "accordion2",
-            width = 60,
             accordionItem(
               title = "Visualização de Texto",
               status = "primary",
               collapsed = FALSE,
-              # textOutput("textOut1"),
-              # textOutput("textOut2")
               if(input$bodyTab == "tab1body"){
-                textOutput("textOut1")
+                uiOutput("textOut1")
               } else{
-                textOutput("textOut2")
+                uiOutput("textOut2")
               }
             )
           )
+        )
+      }
+      })
+      
+      output$textOut1 <- renderUI({
+        if(input$headerTab == "tab1header" && input$bodyTab == "tab1body") {
+          HTML(paste0("<pre>", pdf_content1$text, "</pre>"))
         }
       })
       
-      # output$textOut <- renderText({
-      #   if(input$tabs == "tab1header"){
-      #     texto <- readLines("dados_brutos/testeOutputText.txt", warn = FALSE)
-      #     paste(texto, collapse = "\n")
-      #   }
-      # })
-      
-      output$textOut1 <- renderText({
-        if(input$headerTab == "tab1header" && input$bodyTab == "tab1body"){
-          paste(docx_content1$text, collapse = "\n")
-        }
-      })
-      
-      output$textOut2 <- renderText({
-        if(input$headerTab == "tab1header" && input$bodyTab == "tab2body"){
-          paste(docx_content2$text, collapse = "\n")
+      output$textOut2 <- renderUI({
+        if(input$headerTab == "tab1header" && input$bodyTab == "tab2body") {
+          HTML(paste0("<pre>", pdf_content2$text, "</pre>"))
         }
       })
       
