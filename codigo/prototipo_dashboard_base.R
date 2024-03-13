@@ -1,3 +1,5 @@
+# dados <- read.table("dados_brutos/dados_brutos.csv",header = T, sep = ";", dec = ",")
+
 if(interactive()){
   
   options(device.ask.default = FALSE)
@@ -11,7 +13,8 @@ if(interactive()){
     library(pacman)
   }
   
-  p_load(shiny, shinydashboard, shinydashboardPlus, shinythemes, readtext)
+  p_load(shiny, shinydashboard, shinydashboardPlus, shinythemes, 
+         readtext, dplyr, ggplot2, ggrepel, scales)
   
   shinyApp(
     ui = dashboardPage(
@@ -37,13 +40,17 @@ if(interactive()){
           #sidebar .sidebar-menu label {
             color: #000000 !important; /* Cor preta */
           }
-          .teste-accordion {
+          .texto-accordion {
           display: inline-block;
           margin: 10px auto;
           }
       
-          .teste-accordion .accordion-title {
+          .texto-accordion .accordion-title {
           text-align: center; /* Centraliza o texto apenas nos títulos */
+          }
+          
+          .graficos-accordion {
+          margin: 0 auto;
           }
 
         '))
@@ -75,17 +82,25 @@ if(interactive()){
                 tabPanel("Distribuição de comprimentos", value = "tab2header"),
                 tabPanel("Desembarques", value = "tab3header"),
                 tabPanel("Distribuição espacial das capturas", value = "tab4header")
-                )
+                ),
+              imageOutput("creditos_img")
               ),
-            mainPanel(
-              imageOutput(outputId = "imgSide",width = "50%", height = "50%")
-              )
+            mainPanel()
             )
           )
         ),
       body = dashboardBody(
         uiOutput("tabset_ui"),
-        uiOutput("accordion_ui")
+        fluidRow(
+          column(9,
+                 uiOutput("accordion_ui")
+          )#,
+          # column(3,
+          #        imageOutput("creditos_img")
+          #        )
+          )
+        # uiOutput("accordion_ui"),
+        # uiOutput("creditos_ui")
       ),
       controlbar = dashboardControlbar(
         collapsed = T,
@@ -97,10 +112,10 @@ if(interactive()){
             sliderInput(
               "obs",
               "Number of observations:",
-              min = 0,
-              max = 1000,
-              value = 10,
-              step = 10,
+              min = 2018,
+              max = 2023,
+              value = c(2018,2023),
+              step = 1,
               animate = animationOptions(
                 interval = 800,
                 playButton = icon("play"),
@@ -126,6 +141,14 @@ if(interactive()){
     ),
     server <- function(input, output, session) {
       
+      dados_tubaroes <- reactive({
+        # dados <- read.table("dados_brutos/dados_brutos.csv",header = T, sep = ";", dec = ",")
+        dados
+      })
+      
+      
+      
+      
       pdf_content1 <- readtext("dados_brutos/testepdf.pdf")
       
       pdf_content2 <- readtext("dados_brutos/leiame.pdf")
@@ -140,25 +163,36 @@ if(interactive()){
         }
       })
       
+      output$creditos_img <- renderImage({
+        list(src = "dados_brutos/ImagemTeste.png",  # Substitua pelo caminho da sua imagem PNG
+             contentType = "image/png",
+             # width = 300,  # Largura da imagem
+             # height = 440,  # Altura da imagem
+          
+             alt = "Créditos")  # Texto alternativo para acessibilidade
+      }, deleteFile = FALSE)
+      
       output$accordion_ui <- renderUI({
       if(input$headerTab == "tab2header") {
-        accordion(
-          id = "accordion1",
-          width = 12,
-          accordionItem(
-            title = "Visualização dos Dados",
-            status = "primary",
-            collapsed = FALSE,
-            fluidRow(
-              column(6, plotOutput("distPlot")),
-              column(6, plotOutput("plot2")),
-              column(6, plotOutput("plot3")),
-              column(6, plotOutput("plot4"))
+        div(class = "graficos-accordion",
+            accordion(
+              id = "accordion1",
+              accordionItem(
+                title = "Visualização dos Dados",
+                status = "primary",
+                collapsed = FALSE,
+                fluidRow(
+                  # column(6, plotOutput("graficoBarra")),
+                  # column(6, plotOutput("graficoRosca")),
+                  # column(6, plotOutput("plot3")),
+                  # column(6, plotOutput("plot4"))
+                )
+              )
             )
           )
-        )
+          
       } else if(input$headerTab == "tab1header") {
-        div(class = "teste-accordion",
+        div(class = "texto-accordion",
           accordion(
             id = "accordion2",
             accordionItem(
@@ -169,11 +203,56 @@ if(interactive()){
                 uiOutput("textOut1")
               } else{
                 uiOutput("textOut2")
-              }
+                }
+              )
             )
           )
-        )
-      }
+        }
+      })
+      
+      output$graficoBarra <- renderPlot({
+        dadostub <- dados_tubaroes()
+
+        dadostub <- subset(dadostub, Ano >= input$intervalo_anos[1]
+                        & Ano <= input$intervalo_anos[2])
+
+        # Filtra os dados com base na escolha do sexo
+        if (input$sexo_escolhido == "Macho") {
+          dadostub <- subset(dadostub, Sexo == "M")
+        } else if (input$sexo_escolhido == "Fêmea") {
+          dadostub <- subset(dadostub, Sexo == "F")
+        }
+
+        # Cria o gráfico ggplot
+        ggplot(dadostub, aes(x = Tamanho)) +
+          geom_histogram(binwidth = 10, fill = "blue", color = "black") +
+          labs(title = "Distribuição de Tamanhos de Tubarões",
+               x = "Tamanho (cm)",
+               y = "Frequência (%)") +
+          scale_y_continuous(labels = scales::label_percent(scale = 0.01))
+      })
+      
+      output$graficoRosca <-renderPlot({
+        dadostub <- dados_tubaroes()
+        
+        dadostub <- subset(
+          dadostub, 
+          Ano >= input$intervalo_anos[1] & Ano <= input$intervalo_anos[2])
+        
+        gender <- dadostub %>%
+          count(Sexo)
+        
+        gender <- gender %>%
+          mutate(porc = n / sum(n) * 100)
+        
+        gender$ymax <- cumsum(gender$porc)
+        gender$ymin <- c(0, head(gender$ymax, n=1))
+        
+        ggplot(gender, aes(ymax=ymax, ymin=ymin, xmax = 4, xmin = 3, fill = Sexo)) +
+          geom_rect() +
+          coord_polar(theta = "y") +
+          xlim(c(1,4)) +
+          theme_void()
       })
       
       output$textOut1 <- renderUI({
@@ -188,19 +267,19 @@ if(interactive()){
         }
       })
       
-      output$distPlot <- renderPlot({
-        if(input$obs != 0 && input$headerTab == "tab2header"){
-          hist(rnorm(input$obs), col = "blue",
-               main = paste("Histograma Teste - Observações:", input$obs),
-               xlab = "", freq = TRUE)
-        }
-      })
-      
-      output$plot2 <- renderPlot({
-        if(input$obs != 0 && input$headerTab == "tab2header"){
-         plot(density(rnorm(input$obs)))
-        }
-      })
+      # output$distPlot <- renderPlot({
+      #   if(input$obs != 0 && input$headerTab == "tab2header"){
+      #     hist(rnorm(input$obs), col = "blue",
+      #          main = paste("Histograma Teste - Observações:", input$obs),
+      #          xlab = "", freq = TRUE)
+      #   }
+      # })
+      # 
+      # output$plot2 <- renderPlot({
+      #   if(input$obs != 0 && input$headerTab == "tab2header"){
+      #    plot(density(rnorm(input$obs)))
+      #   }
+      # })
       
       output$plot3 <- renderPlot({
         data <- data.frame(Label = c("A", "B", "C"), Value = c(30, 40, 20))
@@ -208,7 +287,7 @@ if(interactive()){
       })
       
       output$plot4 <- renderPlot({
-        barplot(table(sample(letters[1:5], input$obs, replace = TRUE)))
+        # barplot(table(sample(letters[1:5], input$obs, replace = TRUE)))
       })
       
       }
